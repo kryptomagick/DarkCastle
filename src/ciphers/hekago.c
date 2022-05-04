@@ -1,5 +1,5 @@
 struct hekagoState {
-    uint64_t r[8];
+    uint32_t r[8];
     int keylen;
 };
 
@@ -71,7 +71,7 @@ void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
     infile = fopen(inputfile, "rb");
     outfile = fopen(outputfile, "wb");
     fseek(infile, 0, SEEK_END);
-    uint64_t datalen = ftell(infile);
+    uint32_t datalen = ftell(infile);
     fseek(infile, 0, SEEK_SET);
     fwrite(password_ctxt, 1, mask_bytes, outfile);
     fwrite(Y, 1, mask_bytes, outfile);
@@ -81,12 +81,12 @@ void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
     fwrite(K, 1, key_length, outfile);
     struct hekagoState state;
     long c = 0;
-    uint64_t i = 0;
+    uint32_t i = 0;
     int l = 8;
-    uint64_t output;
+    uint32_t output;
     int k[bufsize];
     memset(k, 0, bufsize);
-    uint64_t blocks = datalen / bufsize;
+    uint32_t blocks = datalen / bufsize;
     int extra = datalen % bufsize;
     if (extra != 0) {
         blocks += 1;
@@ -97,7 +97,7 @@ void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
         bufsize = extra;
     } */
     uvajda_keysetup(&state, keyprime, nonce);
-    for (uint64_t b = 0; b < blocks; b++) {
+    for (uint32_t b = 0; b < blocks; b++) {
         fread(&buffer, 1, bufsize, infile);
         c = 0;
         if ((b == (blocks - 1)) && (extra != 0)) {
@@ -153,7 +153,7 @@ void hekago_decrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
     unsigned char *kwnonce[keywrap_ivlen];
     infile = fopen(inputfile, "rb");
     fseek(infile, 0, SEEK_END);
-    uint64_t datalen = ftell(infile);
+    uint32_t datalen = ftell(infile);
     datalen = datalen - key_length - mac_length - nonce_length - keywrap_ivlen - mask_bytes - mask_bytes - mask_bytes;
     fseek(infile, 0, SEEK_SET);
     fread(&mac, 1, mac_length, infile);
@@ -185,10 +185,10 @@ void hekago_decrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
     long c = 0;
     int i = 0;
     int l = 8;
-    uint64_t output;
+    uint32_t output;
     int k[bufsize];
     memset(k, 0, bufsize);
-    uint64_t blocks = datalen / bufsize;
+    uint32_t blocks = datalen / bufsize;
     int extra = datalen % bufsize;
     if (extra != 0) {
         blocks += 1;
@@ -199,7 +199,7 @@ void hekago_decrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
         infile = fopen(inputfile, "rb");
         fseek(infile, (mac_length + keywrap_ivlen + nonce_length + key_length + (mask_bytes*3)), SEEK_SET);
         uvajda_keysetup(&state, keyprime, nonce);
-        for (uint64_t b = 0; b < blocks; b++) {
+        for (uint32_t b = 0; b < blocks; b++) {
             fread(&buffer, 1, bufsize, infile);
             c = 0;
             if ((b == (blocks - 1)) && (extra != 0)) {
