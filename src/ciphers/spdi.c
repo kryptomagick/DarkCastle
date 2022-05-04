@@ -29,8 +29,8 @@ void spdiKSF(struct spdiState *state, struct spdiKSAState *KSstate) {
     for (r = 0; r < state->rounds; r++) {
         for (i = 0; i < 8; i++) {
             KSstate->r[i] += (tmp0[i] + rotl32(KSstate->r[(i + 1) & 0x07], 21) + state->K[(i - 1) % state->rounds][i]);
-            state->K[r][i] += (KSstate->r[i] + tmp1[i] + (rotr32(tmp1[i], 10) ^ rotl32(KSstate->r[i], 21)));
-            tmp1[i] += state->K[r][i];
+            state->K[r][i & 0x03] += (KSstate->r[i] + tmp1[i] + (rotr32(tmp1[i], 10) ^ rotl32(KSstate->r[i], 21)));
+            tmp1[i] += state->K[r][i & 0x03];
         }
     }
 }
