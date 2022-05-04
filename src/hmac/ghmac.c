@@ -17,7 +17,7 @@ uint32_t rotl32(uint32_t v, int c) {
 */
 void ganja_hmac(char *inputfile, char *tmpprefix, unsigned char * key, int keylen) {
     int rounds = 8 * 8;
-    int bufsize = 131072;
+    int bufsize = 32;
     unsigned char buffer[bufsize];
     memset(buffer, 0, bufsize);
     unsigned char mac[32] = {0};
@@ -35,17 +35,17 @@ void ganja_hmac(char *inputfile, char *tmpprefix, unsigned char * key, int keyle
     W[7] = 0x8a348b7d;
     FILE *infile, *outfile;
     int b, f, s, r;
-    uint64_t i, blocks;
+    int i, blocks;
     int c = 0;
     s = 0;
     m = 0x00000001;
 
-    uint64_t datalen;
+    int datalen;
     infile = fopen(inputfile, "rb");
     fseek(infile, 0, SEEK_END);
     datalen = ftell(infile);
     fseek(infile, 0, SEEK_SET);
-    blocks = datalen / bufsize;
+    blocks = (int)(datalen / bufsize);
     int bs = bufsize;
     int blocks_extra = datalen % bufsize;
     if (blocks_extra != 0) {
@@ -53,8 +53,8 @@ void ganja_hmac(char *inputfile, char *tmpprefix, unsigned char * key, int keyle
     }
     if (datalen < bufsize) {
         blocks = 1;
-        bufsize = datalen;
-        blocks_extra = datalen;
+        bufsize = datalen / 32;
+        blocks_extra = datalen % 32;
     }
 
     for (i = 0; i < (keylen / 4); i++) {
@@ -109,7 +109,6 @@ void ganja_hmac(char *inputfile, char *tmpprefix, unsigned char * key, int keyle
     for (s = 0; s < 8; s++) {
         H[s] ^= W[s];
     }
-
 	    
     c = 0;
     for (i = 0; i < 8; i++) {
@@ -139,15 +138,15 @@ void ganja_hmac(char *inputfile, char *tmpprefix, unsigned char * key, int keyle
     fseek(infile, 0, SEEK_SET);
     outfile = fopen(tempfilename, "wb");
     fwrite(mac, 1, 32, outfile);
-    blocks = datalen / bufsize;
+    blocks = (int)(datalen / bufsize);
     int extra = datalen % bufsize;
     if (extra != 0) {
         blocks += 1;
     }
     if (datalen < bufsize) {
         blocks = 1;
-        extra = datalen;
-        bufsize = datalen;
+        extra = datalen % 32;
+        bufsize = datalen / 32;
     }
     for (i = 0; i < blocks; i++)  {
        if ((i == (blocks -1)) && (extra != 0)) {
@@ -203,7 +202,7 @@ int * ganja_hmac_verify(char *inputfile, unsigned char * key, int keylen) {
     datalen = (ftell(infile) - 32);
     fseek(infile, 0, SEEK_SET);
     fread(&mac_verify, 1, 32, infile);
-    blocks = datalen / bufsize;
+    blocks = (int)(datalen / bufsize);
     int blocks_extra = datalen % bufsize;
     if (blocks_extra != 0) {
         blocks += 1;
