@@ -21,10 +21,11 @@
 #include "ciphers/spock_cbc.c"
 #include "ciphers/qapla.c"
 #include "ciphers/spdi.c"
+#include "ciphers/hekago.c"
 
 void usage() {
     printf("DarkCastle v1.0 - by KryptoMagik\n\n");
-    printf("Algorithms:\n***********\n\ndark             256 bit\nuvajda           256 bit\nspock            256 bit\nspdi             256 bit\nqapla            256 bit\nzanderfish2-cbc  256 bit\nzanderfish2-ofb  256 bit\nzanderfish2-ctr  256 bit\nzanderfish3      256 bit\nzanderfish3-512  512 bit\nzanderfish3-1024 1024 bit\nzanderfish3-ofb  256 bit\n\n");
+    printf("Algorithms:\n***********\n\ndark             256 bit\nuvajda           256 bit\nspock            256 bit\nhekago           256 bit\nspdi             256 bit\nqapla            256 bit\nzanderfish2-cbc  256 bit\nzanderfish2-ofb  256 bit\nzanderfish2-ctr  256 bit\nzanderfish3      256 bit\nzanderfish3-512  512 bit\nzanderfish3-1024 1024 bit\nzanderfish3-ofb  256 bit\n\n");
     printf("Usage:\ncastle <algorithm> -e <input file> <output file> <public keyfile> <secret keyfile>\n");
     printf("castle <algorithm> -d <input file> <output file> <secret keyfile> <public keyfile>\n");
 }
@@ -210,6 +211,14 @@ int main(int argc, char *argv[]) {
         }
         else if (strcmp(mode, decrypt_symbol) == 0) {
             spdiCBCDecrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
+        }
+    }
+    else if (strcmp(algorithm, "hekago") == 0) {
+        if (strcmp(mode, encrypt_symbol) == 0) {
+            hekago_encrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
+        }
+        else if (strcmp(mode, decrypt_symbol) == 0) {
+            hekago_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
         }
     }
     return 0;

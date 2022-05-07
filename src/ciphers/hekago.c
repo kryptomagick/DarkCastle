@@ -1,32 +1,58 @@
+/* KryptoMagick HekaGo Cipher */
+
 struct hekagoState {
     uint32_t r[8];
+    uint32_t x[4];
     int keylen;
+    int rounds;
 };
 
-void hekagoStreamUpdate0(struct hekagoState *state) {
-    r[6] += 1;
-    r[2] ^= r[1];
-    r[4] += r[2];
-    r[0] ^= r[3];
-    r[1] += r[4];
-    r[3] ^= r[5];
-    r[5] += r[6];
-    r[7] += 1;
-    r[0] = rotl32(r[0], 21);
-    r[1] = rotl32(r[1], 6);
-    r[3] = rotl32(r[3], 45);
-    r[4] = rotl32(r[4], 15);
+void hekagoStreamUpdate(struct hekagoState *state) {
+    state->x[0] = state->r[0];
+    state->x[1] = state->r[2];
+    state->x[2] = state->r[4];
+    state->x[3] = state->r[6];
+    state->r[6] += state->r[7] ^ rotl32(state->r[4], 21);
+    state->r[2] ^= state->r[1] + rotl32(state->r[5], 6);
+    state->r[4] += state->r[2] ^ rotl32(state->r[6], 45);
+    state->r[0] ^= state->r[3] + rotl32(state->r[7], 15);
+    state->r[1] += state->r[4] ^ rotl32(state->r[0], 3);
+    state->r[3] ^= state->r[5] + rotl32(state->r[1], 10);
+    state->r[5] += state->r[6] ^ rotl32(state->r[2], 6);
+    state->r[7] ^= state->r[0] + rotl32(state->r[3], 28);
+    state->r[4] += state->x[0];
+    state->r[5] += state->x[1];
+    state->r[6] += state->x[2];
+    state->r[7] += state->x[3];
+    state->x[0] = state->r[0];
+    state->x[1] = state->r[2];
+    state->x[2] = state->r[4];
+    state->x[3] = state->r[6];
+    state->r[0] = state->r[1];
+    state->r[2] = state->r[3];
+    state->r[4] = state->r[5];
+    state->r[6] = state->r[7];
+    state->r[1] = state->x[0];
+    state->r[3] = state->x[1];
+    state->r[5] = state->x[2];
+    state->r[7] = state->x[3];
+}
+
+void hekagoStreamRounds(struct hekagoState *state, int rounds) {
+    for (int r = 0; r < rounds; r++) {
+        hekagoStreamUpdate(state);
+    }
 }
 
 void hekagoKeySetup(struct hekagoState *state, unsigned char *key, unsigned char *nonce) {
-    r[2] = (nonce[0] << 56) + (nonce[1] << 48) + (nonce[2] << 40) + (nonce[3] << 32) + (nonce[4] << 24) + (nonce[5] << 16) + (nonce[6] << 8) + nonce[7];
-    r[5] = (nonce[8] << 56) + (nonce[9] << 48) + (nonce[10] << 40) + (nonce[11] << 32) + (nonce[12] << 24) + (nonce[13] << 16) + (nonce[14] << 8) + nonce[15];
-    r[0] = (key[0] << 56) + (key[1] << 48) + (key[2] << 40) + (key[3] << 32) + (key[4] << 24) + (key[5] << 16) + (key[6] << 8) + key[7];
-    r[1] = (key[8] << 56) + (key[9] << 48) + (key[10] << 40) + (key[11] << 32) + (key[12] << 24) + (key[13] << 16) + (key[14] << 8) + key[15];
-    r[3] = (key[16] << 56) + (key[17] << 48) + (key[18] << 40) + (key[19] << 32) + (key[20] << 24) + (key[21] << 16) + (key[22] << 8) + key[23];
-    r[4] = (key[24] << 56) + (key[25] << 48) + (key[26] << 40) + (key[27] << 32) + (key[28] << 24) + (key[29] << 16) + (key[30] << 8) + key[31];
-    r[6] = 0;
-    r[7] = 1;
+    state->r[2] = (nonce[0] << 56) + (nonce[1] << 48) + (nonce[2] << 40) + (nonce[3] << 32) + (nonce[4] << 24) + (nonce[5] << 16) + (nonce[6] << 8) + nonce[7];
+    state->r[5] = (nonce[8] << 56) + (nonce[9] << 48) + (nonce[10] << 40) + (nonce[11] << 32) + (nonce[12] << 24) + (nonce[13] << 16) + (nonce[14] << 8) + nonce[15];
+    state->r[0] = (key[0] << 56) + (key[1] << 48) + (key[2] << 40) + (key[3] << 32) + (key[4] << 24) + (key[5] << 16) + (key[6] << 8) + key[7];
+    state->r[1] = (key[8] << 56) + (key[9] << 48) + (key[10] << 40) + (key[11] << 32) + (key[12] << 24) + (key[13] << 16) + (key[14] << 8) + key[15];
+    state->r[3] = (key[16] << 56) + (key[17] << 48) + (key[18] << 40) + (key[19] << 32) + (key[20] << 24) + (key[21] << 16) + (key[22] << 8) + key[23];
+    state->r[4] = (key[24] << 56) + (key[25] << 48) + (key[26] << 40) + (key[27] << 32) + (key[28] << 24) + (key[29] << 16) + (key[30] << 8) + key[31];
+    state->r[6] = 0;
+    state->r[7] = 1;
 }
 void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outputfile, int key_length, int nonce_length, int mac_length, int kdf_iterations, unsigned char * kdf_salt, int salt_len, int password_len,  int keywrap_ivlen, int mask_bytes, int bufsize, unsigned char * passphrase) {
     struct qloq_ctx ctx;
@@ -80,6 +106,7 @@ void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
     fwrite(nonce, 1, nonce_length, outfile);
     fwrite(K, 1, key_length, outfile);
     struct hekagoState state;
+    state.rounds = 20;
     long c = 0;
     uint32_t i = 0;
     int l = 8;
@@ -96,25 +123,48 @@ void hekago_encrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
         blocks = 1;
         bufsize = extra;
     } */
-    uvajda_keysetup(&state, keyprime, nonce);
+    hekagoKeySetup(&state, keyprime, nonce);
     for (uint32_t b = 0; b < blocks; b++) {
         fread(&buffer, 1, bufsize, infile);
         c = 0;
         if ((b == (blocks - 1)) && (extra != 0)) {
             bufsize = extra;
         }
-        for (i = 0; i < (bufsize / 8); i++) {
-            uvajda_F(&state);
-            output = (((((((state.r[0] + state.r[6]) ^ state.r[1]) + state.r[5]) ^ state.r[2]) + state.r[4]) ^ state.r[3]) + state.r[7]);
-            k[c] = (output & 0x00000000000000FF);
-            k[c+1] = (output & 0x000000000000FF00) >> 8;
-            k[c+2] = (output & 0x0000000000FF0000) >> 16;
-            k[c+3] = (output & 0x00000000FF000000) >> 24;
-            k[c+4] = (output & 0x000000FF00000000) >> 32;
-            k[c+5] = (output & 0x0000FF0000000000) >> 40;
-            k[c+6] = (output & 0x00FF000000000000) >> 48;
-            k[c+7] = (output & 0xFF00000000000000) >> 56;
-            c += 8;
+        for (i = 0; i < (bufsize / 32); i++) {
+            hekagoStreamRounds(&state, state.rounds);
+            k[c] = (state.r[0] & 0xFF000000) >> 24;
+            k[c+1] = (state.r[0] & 0x00FF0000) >> 16;
+            k[c+2] = (state.r[0] & 0x0000FF00) >> 8;
+            k[c+3] = (state.r[0] & 0x000000FF);
+            k[c+4] = (state.r[1] & 0xFF000000) >> 24;
+            k[c+5] = (state.r[1] & 0x00FF0000) >> 16;
+            k[c+6] = (state.r[1] & 0x0000FF00) >> 8;
+            k[c+7] = (state.r[1] & 0x000000FF);
+            k[c+8] = (state.r[2] & 0xFF000000) >> 24;
+            k[c+9] = (state.r[2] & 0x00FF0000) >> 16;
+            k[c+10] = (state.r[2] & 0x0000FF00) >> 8;
+            k[c+11] = (state.r[2] & 0x000000FF);
+            k[c+12] = (state.r[3] & 0x000000FF);
+            k[c+13] = (state.r[3] & 0xFF000000) >> 24;
+            k[c+14] = (state.r[3] & 0x00FF0000) >> 16;
+            k[c+15] = (state.r[3] & 0x0000FF00) >> 8;
+            k[c+16] = (state.r[4] & 0xFF000000) >> 24;
+            k[c+17] = (state.r[4] & 0x00FF0000) >> 16;
+            k[c+18] = (state.r[4] & 0x0000FF00) >> 8;
+            k[c+19] = (state.r[4] & 0x000000FF);
+            k[c+20] = (state.r[5] & 0xFF000000) >> 24;
+            k[c+21] = (state.r[5] & 0x00FF0000) >> 16;
+            k[c+22] = (state.r[5] & 0x0000FF00) >> 8;
+            k[c+23] = (state.r[5] & 0x000000FF);
+            k[c+24] = (state.r[6] & 0xFF000000) >> 24;
+            k[c+25] = (state.r[6] & 0x00FF0000) >> 16;
+            k[c+26] = (state.r[6] & 0x0000FF00) >> 8;
+            k[c+27] = (state.r[6] & 0x000000FF);
+            k[c+28] = (state.r[7] & 0xFF000000) >> 24;
+            k[c+29] = (state.r[7] & 0x00FF0000) >> 16;
+            k[c+30] = (state.r[7] & 0x0000FF00) >> 8;
+            k[c+31] = (state.r[7] & 0x000000FF);
+            c += 32;
         }
         for (i = 0 ; i < bufsize; i++) {
             buffer[i] = buffer[i] ^ k[i];
@@ -182,6 +232,7 @@ void hekago_decrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
 
     key_wrap_decrypt(keyprime, key_length, key, kwnonce);
     struct hekagoState state;
+    state.rounds = 20;
     long c = 0;
     int i = 0;
     int l = 8;
@@ -198,25 +249,48 @@ void hekago_decrypt(char *keyfile1, char *keyfile2, char * inputfile, char *outp
         outfile = fopen(outputfile, "wb");
         infile = fopen(inputfile, "rb");
         fseek(infile, (mac_length + keywrap_ivlen + nonce_length + key_length + (mask_bytes*3)), SEEK_SET);
-        uvajda_keysetup(&state, keyprime, nonce);
+        hekagoKeySetup(&state, keyprime, nonce);
         for (uint32_t b = 0; b < blocks; b++) {
             fread(&buffer, 1, bufsize, infile);
             c = 0;
             if ((b == (blocks - 1)) && (extra != 0)) {
                 bufsize = extra;
             }
-            for (i = 0; i < (bufsize / 8); i++) {
-                uvajda_F(&state);
-                output = (((((((state.r[0] + state.r[6]) ^ state.r[1]) + state.r[5]) ^ state.r[2]) + state.r[4]) ^ state.r[3]) + state.r[7]);
-                k[c] = (output & 0x00000000000000FF);
-                k[c+1] = (output & 0x000000000000FF00) >> 8;
-                k[c+2] = (output & 0x0000000000FF0000) >> 16;
-                k[c+3] = (output & 0x00000000FF000000) >> 24;
-                k[c+4] = (output & 0x000000FF00000000) >> 32;
-                k[c+5] = (output & 0x0000FF0000000000) >> 40;
-                k[c+6] = (output & 0x00FF000000000000) >> 48;
-                k[c+7] = (output & 0xFF00000000000000) >> 56;
-                c += 8;
+            for (i = 0; i < (bufsize / 32); i++) {
+                hekagoStreamRounds(&state, state.rounds);
+                k[c] = (state.r[0] & 0xFF000000) >> 24;
+                k[c+1] = (state.r[0] & 0x00FF0000) >> 16;
+                k[c+2] = (state.r[0] & 0x0000FF00) >> 8;
+                k[c+3] = (state.r[0] & 0x000000FF);
+                k[c+4] = (state.r[1] & 0xFF000000) >> 24;
+                k[c+5] = (state.r[1] & 0x00FF0000) >> 16;
+                k[c+6] = (state.r[1] & 0x0000FF00) >> 8;
+                k[c+7] = (state.r[1] & 0x000000FF);
+                k[c+8] = (state.r[2] & 0xFF000000) >> 24;
+                k[c+9] = (state.r[2] & 0x00FF0000) >> 16;
+                k[c+10] = (state.r[2] & 0x0000FF00) >> 8;
+                k[c+11] = (state.r[2] & 0x000000FF);
+                k[c+12] = (state.r[3] & 0x000000FF);
+                k[c+13] = (state.r[3] & 0xFF000000) >> 24;
+                k[c+14] = (state.r[3] & 0x00FF0000) >> 16;
+                k[c+15] = (state.r[3] & 0x0000FF00) >> 8;
+                k[c+16] = (state.r[4] & 0xFF000000) >> 24;
+                k[c+17] = (state.r[4] & 0x00FF0000) >> 16;
+                k[c+18] = (state.r[4] & 0x0000FF00) >> 8;
+                k[c+19] = (state.r[4] & 0x000000FF);
+                k[c+20] = (state.r[5] & 0xFF000000) >> 24;
+                k[c+21] = (state.r[5] & 0x00FF0000) >> 16;
+                k[c+22] = (state.r[5] & 0x0000FF00) >> 8;
+                k[c+23] = (state.r[5] & 0x000000FF);
+                k[c+24] = (state.r[6] & 0xFF000000) >> 24;
+                k[c+25] = (state.r[6] & 0x00FF0000) >> 16;
+                k[c+26] = (state.r[6] & 0x0000FF00) >> 8;
+                k[c+27] = (state.r[6] & 0x000000FF);
+                k[c+28] = (state.r[7] & 0xFF000000) >> 24;
+                k[c+29] = (state.r[7] & 0x00FF0000) >> 16;
+                k[c+30] = (state.r[7] & 0x0000FF00) >> 8;
+                k[c+31] = (state.r[7] & 0x000000FF);
+                c += 32;
             }
             for (i = 0 ; i < bufsize; i++) {
                 buffer[i] = buffer[i] ^ k[i];
