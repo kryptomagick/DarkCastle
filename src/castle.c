@@ -21,6 +21,7 @@
 #include "ciphers/spock_cbc.c"
 #include "ciphers/qapla.c"
 #include "ciphers/spdi.c"
+#include "ciphers/spdit3w.c"
 #include "ciphers/hekago.c"
 
 void usage() {
@@ -219,6 +220,14 @@ int main(int argc, char *argv[]) {
         }
         else if (strcmp(mode, decrypt_symbol) == 0) {
             hekago_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
+        }
+    }
+    else if (strcmp(algorithm, "spdi-t3w") == 0) {
+        if (strcmp(mode, encrypt_symbol) == 0) {
+            spdit3wCBCEncrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
+        }
+        else if (strcmp(mode, decrypt_symbol) == 0) {
+            spdit3wCBCDecrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
         }
     }
     return 0;

@@ -166,7 +166,6 @@ void spdiAddRoundKey(struct spdiState *state, int round) {
 }
 
 void spdiBlockEncrypt(struct spdiState * state) {
-    int halfRound = state->rounds / 2;
     for (int r = 0; r < state->rounds; r++) {
         spdiSubBlock(state);
         spdiRotateLeft(state);
@@ -176,7 +175,6 @@ void spdiBlockEncrypt(struct spdiState * state) {
 }
 
 void spdiBlockDecrypt(struct spdiState * state) {
-    int halfRound = state->rounds / 2;
     for (int r = (state->rounds - 1); r != -1; r--) {
         spdiAddRoundKey(state, r);
         spdiInvMixBlock(state);
