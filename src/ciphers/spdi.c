@@ -23,9 +23,6 @@ struct spdiKSAState {
 void spdiKSF(struct spdiState *state, struct spdiKSAState *KSstate) {
     int r, i;
     uint32_t tmp1[8] = {0};
-    //memcpy(tmp1, KSstate->r, (8 * sizeof(uint32_t)));
-    uint32_t tmp0[8] = {0};
-    memcpy(tmp0, KSstate->r, (8 * sizeof(uint32_t)));
     state->K[0][0] = KSstate->r[0];
     state->K[0][1] = KSstate->r[1];
     state->K[0][2] = KSstate->r[2];
