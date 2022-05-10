@@ -22,14 +22,22 @@ struct spdiKSAState {
 
 void spdiKSF(struct spdiState *state, struct spdiKSAState *KSstate) {
     int r, i;
-    uint32_t tmp0[8] = {0};
     uint32_t tmp1[8] = {0};
-    memcpy(tmp1, KSstate->r, (8 * sizeof(uint32_t)));
+    //memcpy(tmp1, KSstate->r, (8 * sizeof(uint32_t)));
+    uint32_t tmp0[8] = {0};
     memcpy(tmp0, KSstate->r, (8 * sizeof(uint32_t)));
-    for (r = 0; r < state->rounds; r++) {
+    state->K[0][0] = KSstate->r[0];
+    state->K[0][1] = KSstate->r[1];
+    state->K[0][2] = KSstate->r[2];
+    state->K[0][3] = KSstate->r[3];
+    state->K[state->rounds - 1][0] = KSstate->r[4];
+    state->K[state->rounds - 1][1] = KSstate->r[5];
+    state->K[state->rounds - 1][2] = KSstate->r[6];
+    state->K[state->rounds - 1][3] = KSstate->r[7];
+    for (r = 1; r < state->rounds - 1; r++) {
         for (i = 0; i < 8; i++) {
-            KSstate->r[i] += (tmp0[i] + rotl32(KSstate->r[(i + 1) & 0x07], 21) + state->K[(i - 1) % state->rounds][i]);
-            state->K[r][i & 0x03] += (KSstate->r[i] + tmp1[i] + (rotr32(tmp1[i], 10) ^ rotl32(KSstate->r[i], 21)));
+            KSstate->r[i] += (rotl32(KSstate->r[(i + 1) & 0x07], 21) + state->K[(r - 1) % state->rounds][i & 0x03]);
+            state->K[r][i & 0x03] += (KSstate->r[i] + tmp1[i] ^ (rotr32(tmp1[i], 10) ^ rotl32(KSstate->r[i], 21)));
             tmp1[i] += state->K[r][i & 0x03];
         }
     }
@@ -42,7 +50,7 @@ void spdiGenSubKeys(struct spdiState * state, unsigned char * key, int keylen) {
     int s;
     state->rounds = 14;
     memset(state->K, 0, state->rounds*(4*sizeof(uint32_t)));
-    memset(&kstate.r, 0, 8*sizeof(uint32_t));
+    memset(kstate.r, 0, 8*sizeof(uint32_t));
     memset(state->last, 0, 4*sizeof(uint32_t));
     memset(state->next, 0, 4*sizeof(uint32_t));
 
@@ -123,7 +131,7 @@ void spdiRotateRight(struct spdiState *state) {
     state->M[0] = tmp;
 }
 
-void spdiMixBlock(struct spdiState *state) {
+void spdiMixBlock0(struct spdiState *state) {
     state->M[0] += state->M[1];
     state->M[2] += state->M[0];
     state->M[1] += state->M[3];
@@ -138,7 +146,7 @@ void spdiMixBlock(struct spdiState *state) {
     state->M[3] += state->M[1];
 }
 
-void spdiInvMixBlock(struct spdiState *state) {
+void spdiInvMixBlock0(struct spdiState *state) {
     state->M[3] -= state->M[1];
     state->M[2] -= state->M[0];
     state->M[1] -= state->M[3];
@@ -153,6 +161,38 @@ void spdiInvMixBlock(struct spdiState *state) {
     state->M[0] -= state->M[1];
 }
 
+void spdiMixBlock1(struct spdiState *state) {
+    state->M[1] = rotl32(state->M[1], 8);
+    state->M[2] = rotl32(state->M[2], 16);
+    state->M[3] = rotl32(state->M[3], 24);
+
+    state->M[0] += state->M[1];
+    state->M[2] += state->M[0];
+    state->M[1] += state->M[3];
+    state->M[3] += state->M[2];
+
+    state->M[0] += state->M[2];
+    state->M[1] += state->M[3];
+    state->M[2] += state->M[0];
+    state->M[3] += state->M[1];
+}
+
+void spdiInvMixBlock1(struct spdiState *state) {
+    state->M[3] -= state->M[1];
+    state->M[2] -= state->M[0];
+    state->M[1] -= state->M[3];
+    state->M[0] -= state->M[2];
+
+    state->M[3] -= state->M[2];
+    state->M[1] -= state->M[3];
+    state->M[2] -= state->M[0];
+    state->M[0] -= state->M[1];
+
+    state->M[3] = rotr32(state->M[3], 24);
+    state->M[2] = rotr32(state->M[2], 16);
+    state->M[1] = rotr32(state->M[1], 8);
+}
+
 void spdiAddRoundKey(struct spdiState *state, int round) {
     state->M[0] ^= state->K[round][0];
     state->M[1] ^= state->K[round][1];
@@ -161,18 +201,32 @@ void spdiAddRoundKey(struct spdiState *state, int round) {
 }
 
 void spdiBlockEncrypt(struct spdiState * state) {
-    for (int r = 0; r < state->rounds; r++) {
+    int halfRound = state->rounds / 2;
+    for (int r = 0; r < halfRound; r++) {
         spdiSubBlock(state);
         spdiRotateLeft(state);
-        spdiMixBlock(state);
+        spdiMixBlock0(state);
+        spdiAddRoundKey(state, r);
+    }
+    for (int r = halfRound; r < state->rounds; r++) {
+        spdiSubBlock(state);
+        spdiRotateLeft(state);
+        spdiMixBlock0(state);
         spdiAddRoundKey(state, r);
     }
 }
 
 void spdiBlockDecrypt(struct spdiState * state) {
-    for (int r = (state->rounds - 1); r != -1; r--) {
+    int halfRound = state->rounds / 2;
+    for (int r = (state->rounds - 1); r != halfRound - 1; r--) {
         spdiAddRoundKey(state, r);
-        spdiInvMixBlock(state);
+        spdiInvMixBlock0(state);
+        spdiRotateRight(state);
+        spdiInvSubBlock(state);
+    }
+    for (int r = (halfRound - 1); r != -1; r--) {
+        spdiAddRoundKey(state, r);
+        spdiInvMixBlock0(state);
         spdiRotateRight(state);
         spdiInvSubBlock(state);
     }
