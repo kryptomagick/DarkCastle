@@ -14,18 +14,16 @@
 #include "ciphers/zanderfish3_cbc.c"
 #include "ciphers/uvajda.c"
 #include "ciphers/darkcipher.c"
-#include "ciphers/zanderfish2_cbc.c"
-#include "ciphers/zanderfish2_ofb.c"
-#include "ciphers/zanderfish2_ctr.c"
 #include "ciphers/zanderfish3_ofb.c"
 #include "ciphers/spock_cbc.c"
 #include "ciphers/qapla.c"
 #include "ciphers/spdi.c"
+#include "ciphers/tpst.c"
 #include "ciphers/hekago.c"
 
 void usage() {
     printf("DarkCastle v1.0 - by KryptoMagik\n\n");
-    printf("Algorithms:\n***********\n\ndark             256 bit\nuvajda           256 bit\nspock            256 bit\nhekago           256 bit\nspdi             256 bit\nqapla            256 bit\nzanderfish2-cbc  256 bit\nzanderfish2-ofb  256 bit\nzanderfish2-ctr  256 bit\nzanderfish3      256 bit\nzanderfish3-512  512 bit\nzanderfish3-1024 1024 bit\nzanderfish3-ofb  256 bit\n\n");
+    printf("Algorithms:\n***********\n\ndark             256 bit\nuvajda           256 bit\nspock            256 bit\nhekago           256 bit\nspdi             256 bit\ntpst             256 bit\nqapla            256 bit\nzanderfish3      256 bit\nzanderfish3-512  512 bit\nzanderfish3-1024 1024 bit\nzanderfish3-ofb  256 bit\n\n");
     printf("Usage:\ncastle <algorithm> -e <input file> <output file> <public keyfile> <secret keyfile>\n");
     printf("castle <algorithm> -d <input file> <output file> <secret keyfile> <public keyfile>\n");
 }
@@ -40,8 +38,6 @@ int main(int argc, char *argv[]) {
     char *encrypt_symbol = "-e";
     char *decrypt_symbol = "-d";
 
-    int zanderfish2_nonce_length = 16;
-    int zanderfish2ctr_nonce_length = 8;
     int zanderfish3_nonce_length = 32;
     int dark_nonce_length = 16;
     int uvajda_nonce_length = 16;
@@ -49,9 +45,9 @@ int main(int argc, char *argv[]) {
     int amagus_nonce_length = 16;
     int qapla_nonce_length = 16;
     int spdi_nonce_length = 16;
+    int tpst_nonce_length = 32;
 
     int zanderfish_key_length = 32;
-    int zanderfish2_key_length = 32;
     int zanderfish3_key_length = 32;
     int zanderfish3_512_key_length = 64;
     int zanderfish3_1024_key_length = 128;
@@ -63,27 +59,26 @@ int main(int argc, char *argv[]) {
     int amagus1024_key_length = 128;
     int qapla_key_length = 32;
     int spdi_key_length = 32;
+    int tpst_key_length = 32;
 
     int dark_mac_length = 32;
     int zanderfish_mac_length = 32;
-    int zanderfish2_mac_length = 32;
     int zanderfish3_mac_length = 32;
     int uvajda_mac_length = 32;
     int spock_mac_length = 32;
     int amagus_mac_length = 32;
     int qapla_mac_length = 32;
     int spdi_mac_length = 32;
+    int tpst_mac_length = 32;
 
     int dark_bufsize = 32768;
     int uvajda_bufsize = 32768;
     int amagus_bufsize = 655536;
-    int zanderfish2_cbc_bufsize = 131072;
     int zanderfish3_bufsize = 262144;
-    int zanderfish2_ofb_bufsize = 262144;
-    int zanderfish2_ctr_bufsize = 262144;
     int spock_bufsize = 131072;
     int qapla_bufsize = 262144;
     int spdi_bufsize = 131072;
+    int tpst_bufsize = 131072;
 
     if (argc != 7) {
         usage();
@@ -139,30 +134,6 @@ int main(int argc, char *argv[]) {
         }
         else if (strcmp(mode, decrypt_symbol) == 0) {
             spock_cbc_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spock_key_length, spock_nonce_length, spock_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spock_bufsize, passphrase);
-        }
-    }
-    else if (strcmp(algorithm, "zanderfish2-cbc") == 0) {
-        if (strcmp(mode, encrypt_symbol) == 0) {
-            zander2_cbc_encrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_cbc_bufsize, passphrase);
-        }
-        else if (strcmp(mode, decrypt_symbol) == 0) {
-            zander2_cbc_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_cbc_bufsize, passphrase);
-        }
-    }
-    else if (strcmp(algorithm, "zanderfish2-ofb") == 0) {
-        if (strcmp(mode, encrypt_symbol) == 0) {
-            zander2_ofb_encrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_ofb_bufsize, passphrase);
-        }
-        else if (strcmp(mode, decrypt_symbol) == 0) {
-            zander2_ofb_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_ofb_bufsize, passphrase);
-        }
-    } 
-    else if (strcmp(algorithm, "zanderfish2-ctr") == 0) {
-        if (strcmp(mode, encrypt_symbol) == 0) {
-            zander2_ctr_encrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2ctr_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_ctr_bufsize, passphrase);
-        }
-        else if (strcmp(mode, decrypt_symbol) == 0) {
-            zander2_ctr_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, zanderfish2_key_length, zanderfish2ctr_nonce_length, zanderfish2_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, zanderfish2_ctr_bufsize, passphrase);
         }
     }
     else if (strcmp(algorithm, "zanderfish3-ofb") == 0) {
@@ -221,5 +192,14 @@ int main(int argc, char *argv[]) {
             hekago_decrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, spdi_key_length, spdi_nonce_length, spdi_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, spdi_bufsize, passphrase);
         }
     }
+    else if (strcmp(algorithm, "tpst") == 0) {
+        if (strcmp(mode, encrypt_symbol) == 0) {
+            tpstCBCEncrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, tpst_key_length, tpst_nonce_length, tpst_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, tpst_bufsize, passphrase);
+        }
+        else if (strcmp(mode, decrypt_symbol) == 0) {
+            tpstCBCDecrypt(keyfile1_name, keyfile2_name, infile_name, outfile_name, tpst_key_length, tpst_nonce_length, tpst_mac_length, kdf_iterations, kdf_salt, salt_len, password_len, keywrap256_ivlen, mask_bytes, tpst_bufsize, passphrase);
+        }
+    }
+    printf("\n");
     return 0;
 }
