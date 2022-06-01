@@ -11,7 +11,7 @@ void qloq_keygen_pkg(int psize, char * prefix, unsigned char * passphrase, unsig
     int total = pkg_sk_bytes_count(&ctx);
     unsigned char * keyblob = (unsigned char *) malloc(total);
     pkg_sk_bytes(&ctx, keyblob);
-    zander3_cbc_encrypt_kf(keyblob, total, skfilename, 64, 32, 32, kdf_iterations, kdf_salt, 16, 32, passphrase);
+    zander3_cbc_encrypt_kf(keyblob, total, skfilename, 32, 32, 32, kdf_iterations, kdf_salt, 16, 32, passphrase);
     free(keyblob);
 }
 

@@ -9,27 +9,9 @@ int keywrap512_ivlen = 16;
 int keywrap1024_ivlen = 16;
 
 void key_wrap_encrypt(unsigned char * keyprime, int key_length, unsigned char * key, unsigned char * K, unsigned char * nonce) {
-    if (key_length == 128) {
-        amagus_random(keyprime, key_length);
-        amagus_random(nonce, keywrap1024_ivlen);
-        memcpy(K, keyprime, key_length);
-        amagus1_crypt(K, key, key_length, nonce, key_length);
-        for (int i = 0; i < key_length; i++) {
-            K[i] = K[i] ^ key[i];
-        }
-    }
-    else if (key_length == 64) {
-        amagus_random(keyprime, key_length);
-        amagus_random(nonce, keywrap512_ivlen);
-        memcpy(K, keyprime, key_length);
-        amagus1_crypt(K, key, key_length, nonce, key_length);
-        for (int i = 0; i < key_length; i++) {
-            K[i] = K[i] ^ key[i];
-        }
-    }
-    else if (key_length == 32) {
-        amagus_random(keyprime, key_length);
-        amagus_random(nonce, keywrap256_ivlen);
+    if (key_length == 32) {
+        getRandomBytes(keyprime, key_length);
+        getRandomBytes(nonce, keywrap256_ivlen);
         memcpy(K, keyprime, key_length);
         uvajda1_crypt(K, key, nonce, key_length);
         for (int i = 0; i < key_length; i++) {
@@ -39,19 +21,7 @@ void key_wrap_encrypt(unsigned char * keyprime, int key_length, unsigned char * 
 }
 
 void key_wrap_decrypt(unsigned char * keyprime, int key_length, unsigned char * key, unsigned char * nonce) {
-    if (key_length == 128) {
-        for (int i = 0; i < key_length; i++) {
-            keyprime[i] = keyprime[i] ^ key[i];
-        }
-        amagus1_crypt(keyprime, key, key_length, nonce, key_length);
-    }
-    else if (key_length == 64) {
-        for (int i = 0; i < key_length; i++) {
-            keyprime[i] = keyprime[i] ^ key[i];
-        }
-        amagus1_crypt(keyprime, key, key_length, nonce, key_length);
-    }
-    else if (key_length == 32) {
+    if (key_length == 32) {
         for (int i = 0; i < key_length; i++) {
             keyprime[i] = keyprime[i] ^ key[i];
         }

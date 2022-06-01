@@ -39,3 +39,11 @@ void capturePassphrase(unsigned char * passphrase) {
     }
     tcsetattr(STDIN_FILENO, TCSANOW, &save);
 }
+
+void getRandomBytes(unsigned char *buf, int num_bytes) {
+    FILE *randfile;
+    randfile = fopen("/dev/urandom", "rb");
+    fread(buf, 1, num_bytes, randfile);
+    fclose(randfile);
+}
+
